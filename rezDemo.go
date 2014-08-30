@@ -15,7 +15,7 @@ import (
 
 func main() {
 
-	response, err := http.Get("http://ets-res3-2130:ets2130@www2.cooptel.qc.ca/services/temps/?mois=4&cmd=Visualiser")
+	response, err := http.Get("http://ets-res3-1130:ets1130@www2.cooptel.qc.ca/services/temps/?mois=4&cmd=Visualiser")
 
 	if err != nil {
 
@@ -35,7 +35,7 @@ func main() {
 		line, err := r.ReadBytes('\n')
 
 		var wg sync.WaitGroup
-		results := make(chan string)
+		results := make(chan string, 30)
 
 		for i := 0; err != io.EOF; i++ {
 
