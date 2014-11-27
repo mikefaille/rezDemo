@@ -1,5 +1,10 @@
 package main
 
+import (
+	"model"
+)
+import "time"
+import "math/rand"
 
 import (
 	"bufio"
@@ -14,15 +19,14 @@ import (
 )
 
 func main() {
-
+	fmt.Print(model.HelloWord())
 	response, err := http.Get("http://ets-res3-1130:ets1130@www2.cooptel.qc.ca/services/temps/?mois=4&cmd=Visualiser")
-
+	defer response.Body.Close()
 	if err != nil {
 
 		fmt.Printf("%s", err)
 		os.Exit(1)
 	} else {
-		defer response.Body.Close()
 		contents, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 
@@ -36,7 +40,7 @@ func main() {
 
 		var wg sync.WaitGroup
 		results := make(chan string, 30)
-
+		//mapNoLigneEtChmbr := make(chan map[int]model.TrfParDateParChmbr)
 		for i := 0; err != io.EOF; i++ {
 
 			line, err = r.ReadBytes('\n')
@@ -47,6 +51,7 @@ func main() {
 
 			}
 			wg.Add(1)
+			//go processText(mapNoLigneEtChmbr, line, results, &wg)
 			go processText(line, results, &wg)
 
 			// Wait for the goroutine to finish
@@ -69,21 +74,26 @@ func main() {
 }
 
 func processText(lineAsByte []byte, results chan string, wg *sync.WaitGroup) {
+
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
 	line := string(lineAsByte[:])
 
 	rp := regexp.MustCompile("<TR><TD>([0-9]+)</TD><TD>([0-9]+-[0-9]+-[0-9]+)</TD><TD ALIGN=\x22RIGHT\x22>[ ]+([0-9]+\x2e[0-9]+)</TD><TD ALIGN=\x22RIGHT\x22>[ ]+([0-9]+\x2e[0-9]+)</TD></TR>")
 
 	match := rp.FindStringSubmatch(line)
+
 	if match != nil {
 
+		//var trfParDateParChambre model.TrfParDateParChmbr
 		var strConcat string
 
 		for k, v := range match {
 
 			switch k {
 			case 1:
-
+				//trfParDateParChambre.
 				strConcat = "chambre : " + v + "\n"
+
 				//fmt.Printf("chambre : %d", chambreCourrante)
 
 			case 2:
@@ -114,4 +124,5 @@ func processText(lineAsByte []byte, results chan string, wg *sync.WaitGroup) {
 	}
 
 	wg.Done()
+
 }
