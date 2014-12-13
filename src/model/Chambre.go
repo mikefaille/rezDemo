@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type TrfParDateParChmbr struct {
+type dateChambreTrsfr struct {
 	chambreNo int16
 	date      time.Time
 	upload    float32
@@ -16,8 +16,8 @@ func  HelloWord() string {
 }
 
 
-func getChambre() TrfParDateParChmbr {
-	var trfParDateParChmbr TrfParDateParChmbr
+func getChambre() dateChambreTrsfr {
+	var trfParDateParChmbr dateChambreTrsfr
 	return trfParDateParChmbr
 }
 

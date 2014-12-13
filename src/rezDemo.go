@@ -16,9 +16,14 @@ import (
 	"os"
 	"regexp"
 	"sync"
+	"strconv"
 )
 
 func main() {
+	//config search this string in text. For eow..
+	const dateLayout = "2006-01-02"
+	// isRandomDelay := false
+
 	fmt.Print(model.HelloWord())
 	response, err := http.Get("http://ets-res3-1130:ets1130@www2.cooptel.qc.ca/services/temps/?mois=4&cmd=Visualiser")
 	defer response.Body.Close()
@@ -39,7 +44,7 @@ func main() {
 		line, err := r.ReadBytes('\n')
 
 		var wg sync.WaitGroup
-		results := make(chan string, 30)
+		results := make(chan dateChambreTrsfr, 30)
 		//mapNoLigneEtChmbr := make(chan map[int]model.TrfParDateParChmbr)
 		for i := 0; err != io.EOF; i++ {
 
@@ -64,8 +69,13 @@ func main() {
 
 		}()
 
+
 		for element := range results {
-			fmt.Println(element)
+			fmt.Printf("chambre : %d \n", element.chambreNo)
+			fmt.Println("date : "+ element.date.Format(dateLayout))
+			fmt.Printf("upload : %0.2f \n", element.upload)
+			fmt.Printf("download : %0.2f \n", element.upload)
+			fmt.Println()
 
 		}
 
@@ -73,14 +83,23 @@ func main() {
 
 }
 
-func processText(lineAsByte []byte, results chan string, wg *sync.WaitGroup) {
+func processText(lineAsByte []byte, results chan dateChambreTrsfr, wg *sync.WaitGroup) {
+	const dateLayout = "2006-01-02"
+	var chambreEntry dateChambreTrsfr
+	isRandomDelay := false
+	if (isRandomDelay){
+		time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+	}
 
-	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+
 	line := string(lineAsByte[:])
 
 	rp := regexp.MustCompile("<TR><TD>([0-9]+)</TD><TD>([0-9]+-[0-9]+-[0-9]+)</TD><TD ALIGN=\x22RIGHT\x22>[ ]+([0-9]+\x2e[0-9]+)</TD><TD ALIGN=\x22RIGHT\x22>[ ]+([0-9]+\x2e[0-9]+)</TD></TR>")
 
 	match := rp.FindStringSubmatch(line)
+
+
+
 
 	if match != nil {
 
@@ -93,22 +112,27 @@ func processText(lineAsByte []byte, results chan string, wg *sync.WaitGroup) {
 			case 1:
 				//trfParDateParChambre.
 				strConcat = "chambre : " + v + "\n"
+				chambreNo, _ := strconv.ParseInt(v, 0, 64)
+				chambreEntry.chambreNo = chambreNo
 
 				//fmt.Printf("chambre : %d", chambreCourrante)
 
 			case 2:
 
 				strConcat += "date : " + v + "\n"
+				chambreEntry.date,_ =  time.Parse(dateLayout, v)
 				//fmt.Printf(" date : %s", date)
 
 			case 3:
 
 				strConcat += "upload : " + v + "\n"
+				chambreEntry.upload, _ = strconv.ParseFloat(v, 32)
 				//fmt.Printf(" upload : %f", bw)
 
 			case 4:
 
 				strConcat += "download : " + v + "\n"
+				chambreEntry.download,_ = strconv.ParseFloat(v, 32)
 				//fmt.Printf(" download : %s\n", v)
 
 			default:
@@ -117,7 +141,7 @@ func processText(lineAsByte []byte, results chan string, wg *sync.WaitGroup) {
 			}
 
 		}
-		results <- strConcat
+		results <- chambreEntry
 
 		print(line)
 
@@ -126,3 +150,13 @@ func processText(lineAsByte []byte, results chan string, wg *sync.WaitGroup) {
 	wg.Done()
 
 }
+
+
+type dateChambreTrsfr struct {
+	chambreNo int64
+	date      time.Time
+	upload    float64
+	download  float64
+}
+
+
